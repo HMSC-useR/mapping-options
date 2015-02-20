@@ -1,0 +1,436 @@
+---
+title: "Some Mapping Options in R (More Ways to Skin the Cat)"
+author: "Daniel Palacios, OSU Fisheries & Wildlife and Marine Mammal Institute"
+date: "HMSC UseR Meeting, February 10, 2015"
+output: ioslides_presentation
+---
+
+## Intro
+
+The presentation at the Jan. 2015 meeting by Tom Wainwright:    
+
+"Skinning Cats with R: Bathymetric & Coastline Maps"    
+http://rpubs.com/hmsc_useR/BathyMapDemo     
+
+covered aspects of mapping in R. Today's presentation covers additional 
+approaches.
+
+
+## Scientific Mapping (+ Geospatial Analysis)
+
+* GIS
+    + ESRI (lots of $)
+    + QGIS (free)
+* GMT: Generic Mapping Tools (free)
+* Matlab
+    + Mapping Toolbox (lots of $)
+    + M_Map (free)
+* R (free)   
+    <div class="red"> ... welcome to the jungle? <div/>
+
+
+## R Packages (not exhaustive)
+
+* Mapping:
+    + *rworldmap*, *maps*, *maptools*, *PBSmapping*, *marmap*,    
+    *RgoogleMaps*, *OpenStreetMap*, *ggplot2*, *ggmap* ...
+* Spatial analysis:
+    + *raster*, *sp (spplot)*, *rgdal*, *rgeos*, *spatstat*, ...
+* Related data:
+    + *rworldmap (rworldxtra)*, *marmap*, ...
+    + *ggmap (Google Maps, OpenStreetMaps, Stamen Maps, CloudMade)*
+
+
+## External Data
+
+> * Bathymetry & shorelines:
+    + NOAA National Geographic Data Center  
+    http://www.ngdc.noaa.gov/mgg/bathymetry/relief.html
+    http://www.ngdc.noaa.gov/mgg/shorelines/gshhs.html
+    + SRTM30_Plus ("Smith & Sandwell")
+    http://topex.ucsd.edu/WWW_html/srtm30_plus.html
+    + GSHHG - A Global Self-consistent, Hierarchical,   
+    High-resolution Geography Database
+    http://www.soest.hawaii.edu/pwessel/gshhg/
+
+> * Natural Earth (beautiful background tiles & more data!)   
+    http://www.naturalearthdata.com
+
+
+## External Data
+
+> * Environmental data:
+    + NOAA's ERD Data Access Protocols (ERDDAPs)  
+    http://coastwatch.pfel.noaa.gov/erddap/index.html
+    http://upwell.pfeg.noaa.gov/erddap/index.html
+    + NASA (JPL, GSFC)    
+    http://podaac.jpl.nasa.gov
+    http://oceancolor.gsfc.nasa.gov/cms/
+    http://giovanni.gsfc.nasa.gov/giovanni/
+    + AVISO http://www.aviso.altimetry.fr/en/home.html
+
+> * ERRDAP's xtract-o-matic routines for single points, animal tracks, or 
+    irregularly shaped polygons:   
+    http://coastwatch.pfel.noaa.gov/xtracto/
+
+> * Your favorite shapefile repositories
+
+
+## Mapping
+### Two approaches:
+1. Draw all your data (including geographic data)
+    * Standard format for scientific publications
+
+2. Overlay your data on a georeferenced tile (pretty!)
+    * Appropriate for slide and poster presentations, magazines, etc.
+
+## Mapping
+### Basic example:
+Plot the location of 5 sampling stations along the central California coast, 
+USA, using some of the mapping options available in R.
+
+```{r}
+# Specify station locations:
+coords.locs <- data.frame(Locs = c("Pt. Piedras Blancas",
+                                   "Pt. Estero","Pt. Buchon",
+                                   "Pt. Sal", "Pt. Arguello"),
+                          Long = c(-121.3500, -120.8000, -120.7000,
+                                   -120.6000, -120.5500),
+                          Lat = c(35.6500, 35.4000, 35.2000,
+                                  34.8000, 34.5500))
+
+# Specify desired map boundaries:
+xlim <- c(-122.3333, -120.5)
+ylim <- c(34.3333, 36.3333)
+```
+
+
+## Mapping
+### Load libraries required for the example:
+
+```{r, eval = FALSE}
+library(maps)
+library(mapdata) # loads additional map databases (high-res)
+library(maptools) # (loads foreign, sp, grid, and lattice)
+#library(rgeos) # required by maptools to work with GHHSG
+gpclibPermit() # older alternative to work with GHHSG
+library(PBSmapping)
+library(ggplot2)
+library(ggmap)
+```
+
+```{r, echo = FALSE}
+library(maps)
+library(mapdata) # loads additional map databases (high-res)
+library(maptools) # (loads foreign, sp, grid, and lattice)
+#library(rgeos) # required by maptools to work with GHHSG
+gpclibPermit() # older alternative to work with GHHSG
+library(PBSmapping)
+library(ggplot2)
+library(ggmap)
+```
+
+
+## Mapping
+
+- Some packages can use high-resolution coastlines
+- GSHHG (formerly GSHHS): http://www.soest.hawaii.edu/pwessel/gshhg/    
+- Download the BINARY file
+- The ZIP file (~120 MB) HAS to be extracted into one of R's    
+packages (e.g., maptools)... on my Mac machine:    
+
+"/Library/Frameworks/R.framework/Versions/3.0/Resources/library/    
+maptools/share/gshhg-bin-2.3.4"
+
+```{r}
+# Call the GSHHG file with the highest-resolution coastline:
+callGSHHG <- system.file("share/gshhg-bin-2.3.4/gshhs_h.b",
+                         package = "maptools", mustWork = TRUE)
+```
+
+
+## 1a. Drawing: *maps* package
+
+```{r}
+# Generate map object (uses maps coarse coastline):
+coastCAc <- map(database = "state", regions = "california",
+                plot = FALSE)
+```
+
+- *coastCAc* is a map class object with four variables:     
+        *x*, *y*, *range*, and *names*   
+- If projection is not specified a "rectangular" projection     
+  is used
+- [Note: package *mapdata* offers higher resolution coastlines 
+that may work with examples 1a and 1d, but I haven't checked]
+
+
+## 1a. Drawing: *maps* package
+
+```{r, eval = FALSE}
+# Plot the base map:
+map(database = "state", regions = "california", fill = TRUE,
+    col = "grey85", xlim = xlim, ylim = ylim)
+# map(coastCAc) and plot(coastCAc) are also options
+map.axes() # adds the axes, as these are not drawn by default
+
+# Add the locations along with the labels:
+points(coords.locs[,2:3], pch = 20, col = "red")
+text(coords.locs[,2]-0.1,coords.locs[,3], coords.locs[,1],
+     adj = 1, cex = 0.6)
+grid(lty = 1)
+box()
+```
+
+
+## 1a. Drawing: *maps* package
+
+Plain and simple. Coastline is a bit coarse. Use GSHHG!
+
+```{r, echo = FALSE}
+# Plot the base map:
+map(database = "state", regions = "california", fill = TRUE,
+    col = "grey85", xlim = xlim, ylim = ylim)
+# map(coastCAc) and plot(coastCAc) are also options
+map.axes() # adds the axes, as these are not drawn by default
+
+# Add the locations along with the labels:
+points(coords.locs[,2:3], pch = 20, col = "red")
+text(coords.locs[,2]-0.1,coords.locs[,3], coords.locs[,1],
+     adj = 1, cex = 0.6)
+grid(lty = 1)
+box()
+```
+
+
+## 1b. Drawing: *maptools* package (uses GSHHG)
+
+```{r}
+# Extract high-resolution coastline with long in 180-deg system:
+coastCAh180 <- Rgshhs(callGSHHG, xlim = xlim+360, ylim = ylim,
+                      level = 1, shift = TRUE)
+```
+
+
+## 1b. Drawing: *maptools* package (uses GSHHG)
+
+```{r, eval = FALSE}
+# Plot the base map using GSHHG high-resolution coastline:
+plot(coastCAh180$SP, col = "grey85", pbg = "azure",
+     xlim = xlim, ylim = ylim, xaxs = "i", yaxs = "i",
+     axes = TRUE)
+
+# Add the locations along with the labels:
+points(coords.locs[,2:3], pch = 20, col = "red")
+text(coords.locs[,2]-0.1,coords.locs[,3], coords.locs[,1],
+     adj = 1, cex = 0.6)
+grid(lty = 1)
+box()
+```
+
+
+## 1b. Drawing: *maptools* package (uses GSHHG)
+
+Locations on land (inaccurate coords.locs?). x-axis too wide. Blue background 
+argument (*pbg*) did not work.
+
+```{r, echo = FALSE}
+# Plot the base map using GSHHG high-resolution coastline:
+plot(coastCAh180$SP, col = "grey85", pbg = "azure",
+     xlim = xlim, ylim = ylim, xaxs = "i", yaxs = "i",
+     axes = TRUE)
+
+# Add the locations along with the labels:
+points(coords.locs[,2:3], pch = 20, col = "red")
+text(coords.locs[,2]-0.1,coords.locs[,3], coords.locs[,1],
+     adj = 1, cex = 0.6)
+grid(lty = 1)
+box()
+```
+
+
+## 1c. Drawing: *PBSmapping* package (uses GSHHG)
+
+```{r}
+# Extract high-resolution coastline with long in 360-deg system:
+coastCAh360 <- importGSHHS(callGSHHG, xlim = xlim+360,
+                           ylim = ylim, maxLevel = 1)
+```
+
+
+## 1c. Drawing: *PBSmapping* package (uses GSHHG)
+
+```{r}
+# Specify the location coordinates as PBSmapping Event data type:
+coords.locs2 <- cbind(Nbr = 1:5, coords.locs[,2:3])
+names(coords.locs2) <- c("EID","X","Y")
+coords.locs2 <- as.EventData(coords.locs2)
+```
+
+
+## 1c. Drawing: *PBSmapping* package (uses GSHHG)
+
+```{r, eval = FALSE}
+# Plot the base map:
+par(mgp = c(2, 0, 0)) # shift up the line where the x-axis legend goes
+                      # Defaults are mgp = c(3,1,0)
+plotMap(coastCAh360, col = "grey85", bg = "lightblue")
+
+# Add the locations along with the labels:
+addPoints(coords.locs2, pch = 20, col = "red")
+text(coords.locs[,2]-0.05, coords.locs[,3], coords.locs[,1],
+     adj = 1, cex = 0.6)
+```
+
+
+## 1c. Drawing: *PBSmapping* package (uses GSHHG)
+
+Looks good. Nice fill options for land and ocean. Ticks are inside plot area.
+```{r, echo = FALSE}
+# Plot the base map:
+par(mgp = c(2, 0, 0)) # shift up the line where the x-axis legend goes
+# Defaults are mgp = c(3,1,0)
+plotMap(coastCAh360, col = "grey85", bg = "lightblue")
+
+# Add the locations along with the labels:
+addPoints(coords.locs2, pch = 20, col = "red")
+text(coords.locs[,2]-0.05,coords.locs[,3], coords.locs[,1],
+     adj = 1, cex = 0.6)
+```
+
+
+## 1d. Drawing: *ggplot2* package (uses *maps* package)
+
+```{r}
+# Use state coastline from maps package. Notice call differs
+# slightly from call in slide 9)
+coastCA3 <- data.frame(map(database = "state",
+                           regions = "california",
+                           plot = FALSE)[c("x","y")])
+# has to be "x / y"!
+```
+
+
+[Note: It may be that package *mapdata* offers higher resolution coastlines 
+for use with *maps* (ex. 1a and 1d), but I haven't checked]
+
+
+## 1d. Drawing: *ggplot2* package (uses *maps* package)
+
+```{r, eval = FALSE}
+# Generate full map by layering:
+ggplot(coastCA3, aes(x = x, y = y)) + geom_path() +
+  coord_map(project = "mercator", xlim = xlim, ylim = ylim) +
+  geom_point(data = coords.locs, aes(Long, Lat),
+             size = 4, color = "red") +
+  geom_point(data = coords.locs[1:3,], aes(Long, Lat),
+             size = 2, color = "black") +
+  geom_text(data = coords.locs, aes(x = Long-0.05, y = Lat,
+                                    label = Locs),
+            hjust = 1, size = 3, color = "black") +
+  labs(x = "Longitude", y = "Latitude", size = 20) +
+  theme(axis.text = element_text(size = rel(1.25)),
+        axis.title = element_text(size = rel(1.25))) +
+  theme_bw()
+```
+
+
+## 1d. Drawing: *ggplot2* package (uses *maps* package)
+
+Coarse coastline. No land fill options with *geom_path()*. Crisp plot area.
+```{r, echo = FALSE}
+# Generate full map by layering:
+ggplot(coastCA3, aes(x = x, y = y)) + geom_path() +
+  coord_map(project = "mercator", xlim = xlim, ylim = ylim) +
+  geom_point(data = coords.locs, aes(Long, Lat),
+             size = 4, color = "red") +
+  geom_point(data = coords.locs[1:3,], aes(Long, Lat),
+             size = 2, color = "black") +
+  geom_text(data = coords.locs, aes(x = Long-0.05, y = Lat,
+                                    label = Locs),
+            hjust = 1, size = 3, color = "black") +
+  labs(x = "Longitude", y = "Latitude", size = 20) +
+  theme(axis.text = element_text(size = rel(1.25)),
+        axis.title = element_text(size = rel(1.25))) +
+  theme_bw()
+```
+
+
+## 2a. Overlay on tile: *ggplot2* package (uses *OpenStreetMap* package)
+
+```{r, eval = FALSE}
+# Load additional libraries:
+library(RColorBrewer) # nice color schemes
+Sys.setenv(NOAWT = 1) # call this before loading OpenStreetMap!
+library(OpenStreetMap) # base-layer maps
+```
+
+```{r, echo = FALSE}
+# Load additional libraries:
+Sys.setenv(NOAWT = 1) # call this before loading OpenStreetMap!
+library(OpenStreetMap) # base-layer maps
+library(RColorBrewer) # nice color schemes
+```
+
+
+## 2a. Overlay on tile: *ggplot2* package (uses *OpenStreetMap* package)
+```{r}
+# For plotting with OpenStreetMap, coordinates need to be converted
+# from long/lat to Mercator using projectMercator().
+coords.locs2 <- cbind(coords.locs, projectMercator(coords.locs$Lat,
+                                            coords.locs$Long))
+# This adds new columns 'x' and 'y' to coords.locs2
+
+# Download base-layer map from the web:
+base.lyr <- openmap(c(ylim[2], xlim[1]), c(ylim[1], xlim[2]),
+                    type = "bing")
+
+# Create base map layer:
+base.map = autoplot(base.lyr)
+```
+
+
+## 2a. Overlay on tile: *ggplot2* package (uses *OpenStreetMap* package)
+
+```{r, eval = FALSE}
+# Build up map by adding elements as layers:
+prettyMap <- base.map +
+  geom_point(aes(x = x, y = y), size = 4.5, color = "white",
+             data = coords.locs2) +
+  geom_point(aes(x = x, y = y, size = 4, color = LETTERS[1:5]),
+             data = coords.locs2) +
+  scale_colour_brewer(palette = "Set2") +
+  geom_text(aes(label = Locs, x = x-8000, y = y), color = "white",
+            hjust = 1, data = coords.locs2) +
+  guides(color = guide_legend("Station Code"), size = FALSE) +
+  labs(title = "Station Locations \nOct. 2014 - Feb. 2015",
+       x = "Longitude", y = "Latitude") +
+  theme(axis.text = element_text(size = rel(1)))
+
+# Print to graphics device:
+print(prettyMap)
+```
+
+
+## 2a. Overlay on tile: *ggplot2* package (uses *OpenStreetMap* package)
+
+[Note: package *ggmap* achieves similar results]
+
+```{r, echo = FALSE}
+# Build up map by adding elements as layers:
+prettyMap <- base.map +
+  geom_point(aes(x = x, y = y), size = 4.5, color = "white",
+             data = coords.locs2) +
+  geom_point(aes(x = x, y = y, size = 4, color = LETTERS[1:5]),
+             data = coords.locs2) +
+  scale_colour_brewer(palette = "Set2") +
+  geom_text(aes(label = Locs, x = x-8000, y = y), color = "white",
+            size = 3, hjust = 1, data = coords.locs2) +
+  guides(color = guide_legend("Station Code"), size = FALSE) +
+  labs(title = "Station Locations \nOct. 2014 - Feb. 2015",
+       x = "Longitude", y = "Latitude") +
+  theme(axis.text = element_text(size = rel(1)))
+
+# Print to graphics device:
+print(prettyMap)
+```
