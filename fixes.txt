@@ -1,0 +1,30 @@
+You can set default `fig_width` and `fig_height` values for the entire rmd document:
+
+---
+title: "My Document"
+output:
+html_document:
+fig_width: 6
+fig_height: 4
+---
+ 
+or set them for specific chunks.
+ 
+```{r, fig.width=8, fig.height=4}
+ggplot(...)
+```
+
+———————————————————————————————————————————————————————————————————————————————
+
+Installing package OpenStreetMaps requires that package rgdal be already installed. At least on Mac machines this could be troublesome depending on the combination of installed OS X and R versions. It appears that in R-3.1.1 it is not possible to install the current version of rgdal (0.9-1) from the precompiled binaries, and instead one must go through a repository of archived versions at Oxford University to install v. 0.8-16. Interestingly, I was able to install rgdal 0.9-1 on my machine running the earlier R-3.0.3. Go figure! (Talk to Jessica Luo if you have this problem, as she found the work-around).
+
+On a related note, once this problem has been overcome, the subsequent installation of OpenStreetMaps needs to specify: install.packages(OpenStreetMaps, type = "source").
+
+OpenStreetMaps: another issue encountered by some is that OpenStreetMaps uses the RJava library, and one needs to ensure that the Java version installed matches the R version installed; i.e. Java 64-bit for R 64-bit or Java 32-bit for R 32-bit.
+
+The example 2a in my presentation that uses ggplot2 and OpenStreetMaps with the "bing" option generates a map in UTM coordinates along the axes. Those of us who require coordinates of longitude and latitude still need to figure out how to convert the data underlying the tile. Perhaps OpenStreetMaps offers additional documentation on how to achieve this, or perhaps with using the raster package?
+
+Solène experimented with using background tiles and coastline/river data from Natural Earth in ggplot2. While she was able to generate a pretty map, as promised, she also found out that for small areas (> 100x100 km or so) the tiles do not have great resolution, so the images won't look as pretty. In conclusion, the Natural Earth imagery is good for regional to global scale maps. Also, in order to read Natural Earth tiff files and shapefiles into R you need to have installed packages raster and rgdal, respectively.
+
+PBSmapping: Lenaig discovered that the boundaries of a map are set by the N-S and E-W extents of the coastline being extracted, such that adding points or data beyond these boundaries will be excluded from the map. Lenaig just emailed me to tell me that she figured out a way to obtain a correct plot region by invoking regional coastline subsets that are provided with the package, instead of subsetting the raw GSHHS data as in my example 1c. In this case she called the "nepacLLhigh" subset for the Alaska-California region with the command: data(nepacLLhigh), and then she plotted a smaller area of interest with the following command: plotMap(nepacLLhigh, xlim=c(-125.5, -123), ylim=c(39, 47)), and then she was able to add her own data points without them getting clipped.
+For examples 1a and 1d that use the maps package to obtain the coastline for a state, Lenaig found out that it is possible to obtain the coastlines for multiple states for maps that extend over several states in one call by specifying: map(database = "state", regions = c("washington", "oregon", "california"), xlim = c(-125.5, -123), ylim = c(39, 47)).
