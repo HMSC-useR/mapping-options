@@ -112,8 +112,8 @@ ylim <- c(34.3333, 36.3333)
 library(maps)
 library(mapdata) # loads additional map databases (high-res)
 library(maptools) # (loads foreign, sp, grid, and lattice)
-#library(rgeos) # required by maptools to work with GHHSG
-gpclibPermit() # older alternative to work with GHHSG
+library(rgeos) # required by maptools to work with GHHSG
+#gpclibPermit() # older alternative to work with GHHSG
 library(PBSmapping)
 library(ggplot2)
 library(ggmap)
@@ -123,8 +123,8 @@ library(ggmap)
 library(maps)
 library(mapdata) # loads additional map databases (high-res)
 library(maptools) # (loads foreign, sp, grid, and lattice)
-#library(rgeos) # required by maptools to work with GHHSG
-gpclibPermit() # older alternative to work with GHHSG
+library(rgeos) # required by maptools to work with GHHSG
+#gpclibPermit() # older alternative to work with GHHSG
 library(PBSmapping)
 library(ggplot2)
 library(ggmap)
@@ -139,12 +139,12 @@ library(ggmap)
 - The ZIP file (~120 MB) HAS to be extracted into one of R's    
 packages (e.g., maptools)... on my Mac machine:    
 
-"/Library/Frameworks/R.framework/Versions/3.0/Resources/library/    
-maptools/share/gshhg-bin-2.3.4"
+"/Library/Frameworks/R.framework/Versions/3.3/Resources/library/
+maptools/share/gshhg-bin-2.3.5"
 
 ```{r}
 # Call the GSHHG file with the highest-resolution coastline:
-callGSHHG <- system.file("share/gshhg-bin-2.3.4/gshhs_h.b",
+callGSHHG <- system.file("share/gshhg-bin-2.3.5/gshhs_h.b",
                          package = "maptools", mustWork = TRUE)
 ```
 
@@ -262,8 +262,8 @@ coastCAh360 <- importGSHHS(callGSHHG, xlim = xlim+360,
 
 ```{r}
 # Specify the location coordinates as PBSmapping Event data type:
-coords.locs2 <- cbind(Nbr = 1:5, coords.locs[,2:3])
-names(coords.locs2) <- c("EID","X","Y")
+coords.locs2 <- cbind(Nbr = 1:5, coords.locs[, 2:3])
+names(coords.locs2) <- c("EID", "X", "Y")
 coords.locs2 <- as.EventData(coords.locs2)
 ```
 
@@ -278,7 +278,7 @@ plotMap(coastCAh360, col = "grey85", bg = "lightblue")
 
 # Add the locations along with the labels:
 addPoints(coords.locs2, pch = 20, col = "red")
-text(coords.locs[,2]-0.05, coords.locs[,3], coords.locs[,1],
+text(coords.locs[, 2]-0.05, coords.locs[, 3], coords.locs[, 1],
      adj = 1, cex = 0.6)
 ```
 
@@ -289,12 +289,12 @@ Looks good. Nice fill options for land and ocean. Ticks are inside plot area.
 ```{r, echo = FALSE}
 # Plot the base map:
 par(mgp = c(2, 0, 0)) # shift up the line where the x-axis legend goes
-# Defaults are mgp = c(3,1,0)
+# Defaults are mgp = c(3, 1, 0)
 plotMap(coastCAh360, col = "grey85", bg = "lightblue")
 
 # Add the locations along with the labels:
 addPoints(coords.locs2, pch = 20, col = "red")
-text(coords.locs[,2]-0.05,coords.locs[,3], coords.locs[,1],
+text(coords.locs[, 2]-0.05, coords.locs[, 3], coords.locs[, 1],
      adj = 1, cex = 0.6)
 ```
 
@@ -306,7 +306,7 @@ text(coords.locs[,2]-0.05,coords.locs[,3], coords.locs[,1],
 # slightly from call in slide 9)
 coastCA3 <- data.frame(map(database = "state",
                            regions = "california",
-                           plot = FALSE)[c("x","y")])
+                           plot = FALSE)[c("x", "y")])
 # has to be "x / y"!
 ```
 
@@ -344,7 +344,7 @@ ggplot(coastCA3, aes(x = x, y = y)) + geom_path() +
   coord_map(project = "mercator", xlim = xlim, ylim = ylim) +
   geom_point(data = coords.locs, aes(Long, Lat),
              size = 4, color = "red") +
-  geom_point(data = coords.locs[1:3,], aes(Long, Lat),
+  geom_point(data = coords.locs[1:3, ], aes(Long, Lat),
              size = 2, color = "black") +
   geom_text(data = coords.locs, aes(x = Long-0.05, y = Lat,
                                     label = Locs),
