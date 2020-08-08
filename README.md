@@ -5,4 +5,4 @@ The source code is contained in the R Markdown file "mapping_hmsc_useR.Rmd". To 
 
 To build the presentation in R, run `knit2html("mapping_hmsc_useR.Rmd")`, or use the `knit_HTML` button in RStudio.
 
-Note that the contents of the presentation are rather outdated, as there has been much progress, and more and better options for mapping in R have come out since.
+Note that the contents of the presentation are rather outdated, as there has been much progress, and more and better options for mapping in R have come out since. For example, take a look at the slide presentation by [Olivier Gimenez](https://oliviergimenez.github.io/) ["Introduction to GIS and mapping in R using the `sf` package"](https://github.com/oliviergimenez/intro_spatialR).
